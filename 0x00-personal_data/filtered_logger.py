@@ -69,8 +69,9 @@ def main():
 
 
 class RedactingFormatter(logging.Formatter):
-    """ Redacting Formatter class """
-    
+    """ Redacting Formatter class
+        """
+
     REDACTION = "***"
     FORMAT = "[HOLBERTON] %(name)s %(levelname)s %(asctime)-15s: %(message)s"
     SEPARATOR = ";"
@@ -88,4 +89,3 @@ class RedactingFormatter(logging.Formatter):
 
 if __name__ == '__main__':
     main()
-
