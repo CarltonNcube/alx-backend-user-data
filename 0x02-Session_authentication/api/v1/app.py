@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 '''This script defines a Flask API with a status endpoint'''
+
 from api.v1.views import app_views
 from flask import Flask, jsonify, abort, request
-from flask_cors import (CORS, cross_origin)
+from flask_cors import CORS, cross_origin
 import os
 from os import getenv
-
 
 app = Flask(__name__)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
@@ -31,28 +31,28 @@ elif AUTH_TYPE == "session_db_auth":
     auth = SessionDBAuth()
 
 
-@ app.errorhandler(404)
+@app.errorhandler(404)
 def not_found(error) -> str:
     """ Not found handler
     """
     return jsonify({"error": "Not found"}), 404
 
 
-@ app.errorhandler(401)
+@app.errorhandler(401)
 def unauthorized_error(error) -> str:
     """ Unauthorized handler
     """
     return jsonify({"error": "Unauthorized"}), 401
 
 
-@ app.errorhandler(403)
+@app.errorhandler(403)
 def forbidden_error(error) -> str:
     """ Forbidden handler
     """
     return jsonify({"error": "Forbidden"}), 403
 
 
-@ app.before_request
+@app.before_request
 def before_request() -> str:
     """ Before Request Handler
     Requests Validation
@@ -60,10 +60,12 @@ def before_request() -> str:
     if auth is None:
         return
 
-    excluded_paths = ['/api/v1/status/',
-                      '/api/v1/unauthorized/',
-                      '/api/v1/forbidden/',
-                      '/api/v1/auth_session/login/']
+    excluded_paths = [
+        '/api/v1/status/',
+        '/api/v1/unauthorized/',
+        '/api/v1/forbidden/',
+        '/api/v1/auth_session/login/'
+    ]
 
     if not auth.require_auth(request.path, excluded_paths):
         return
@@ -77,6 +79,18 @@ def before_request() -> str:
         abort(403)
 
     request.current_user = current_user
+
+    if request.path == '/api/v1/users/me' and request.method == 'GET':
+        return
+
+    if request.method == 'GET':
+        pass  # Handle GET requests
+    elif request.method == 'POST':
+        pass  # Handle POST requests
+    elif request.method == 'PUT':
+        pass  # Handle PUT requests
+    elif request.method == 'DELETE':
+        pass  # Handle DELETE requests
 
 
 if __name__ == "__main__":

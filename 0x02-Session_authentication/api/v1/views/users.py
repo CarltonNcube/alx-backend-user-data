@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-""" 
+"""
 Module containing Users views.
 """
 from api.v1.views import app_views
