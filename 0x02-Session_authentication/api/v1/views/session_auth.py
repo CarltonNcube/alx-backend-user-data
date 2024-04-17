@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
 '''Views for session authentication'''
+
 from api.v1.views import app_views
 from flask import abort, jsonify, request
-from models.user import User
-from os import getenv
+from api.v1.app import auth  # Import the auth object from app
 
 
 @app_views.route('/auth_session/login', methods=['POST'], strict_slashes=False)
 def login():
-    """ POST /auth_session/login
-    Return
-        - Logged in user
-    """
+    """POST /auth_session/login - Log in a user"""
     email = request.form.get('email')
 
     if not email:
@@ -34,8 +31,6 @@ def login():
         if not user.is_valid_password(password):
             return jsonify({"error": "wrong password"}), 401
 
-    from api.v1.app import auth
-
     user = found_users[0]
     session_id = auth.create_session(user.id)
 
@@ -47,18 +42,10 @@ def login():
     return response
 
 
-@app_views.route('/auth_session/logout',
-                 methods=['DELETE'], strict_slashes=False)
+@app_views.route('/auth_session/logout', methods=['DELETE'], strict_slashes=False)
 def logout():
-    """ DELETE /auth_session/logout
-    Return:
-        - Empty dictionary if succesful
-    """
-    from api.v1.app import auth
-
-    deleted = auth.destroy_session(request)
-
-    if not deleted:
+    """DELETE /auth_session/logout - Logout a user"""
+    if not auth.destroy_session(request):
         abort(404)
-
+    
     return jsonify({}), 200
