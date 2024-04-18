@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-""" 
-Entry point of the API application.
-"""
+"""Entry point of the API application."""
 
 from flask import Blueprint
 
