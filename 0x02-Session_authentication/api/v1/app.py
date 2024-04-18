@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 '''This script defines a Flask API with a status endpoint'''
-
 from os import getenv
 from api.v1.views import app_views
 from flask import Flask, jsonify, abort, request
