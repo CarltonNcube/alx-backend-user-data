@@ -1,123 +1,186 @@
-# Project 0x02: Session Authentication
+Project 0x01: Basic Authentication
+Background Context
 
-## Background Context
+In this project, you will delve into understanding the authentication process and implement Basic Authentication on a simple API.
 
-In this project, you will implement Session Authentication without using any additional modules. While in practice it's discouraged to build your own authentication system and recommended to use established frameworks, this project aims to provide a hands-on understanding of the authentication mechanism.
+It's worth noting that in real-world scenarios, implementing your own Basic authentication system is discouraged. Instead, established modules or frameworks like Flask-HTTPAuth in Python-Flask should be utilized. However, for the sake of learning, this project will guide you through each step of the authentication mechanism.
+Learning Objectives
 
-### Resources
+Upon completion of this project, you will be able to explain the following concepts without relying on external sources:
 
-Read or watch:
+    Understanding of authentication principles
+    Knowledge of Base64 encoding
+    Encoding strings in Base64
+    Understanding Basic authentication
+    Sending the Authorization header
 
-- [REST API Authentication Mechanisms - Only the session auth part](https://restfulapi.net/session-authentication-101/): This resource provides an overview of session authentication and its role in RESTful APIs.
-- [HTTP Cookie](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies): Understand the fundamentals of HTTP cookies and their significance in web applications, including session management.
-- [Flask](https://flask.palletsprojects.com/en/2.0.x/): Flask is a lightweight WSGI web application framework in Python. You'll use Flask to implement session authentication.
-- [Flask Cookie](https://flask.palletsprojects.com/en/2.0.x/quickstart/#cookies): Learn how to work with cookies in Flask, which is essential for session management.
 
-Task 0: Et moi et moi et moi!
+Tasks
+0. Simple Basic API
 
-Objective: Copy all work from the previous Basic authentication project into this new folder. Additionally, add a new endpoint (GET /users/me) to retrieve the authenticated User object.
+Download and initiate your project from the provided archive.zip file. Inside, you will find a straightforward API containing one model: User. User data storage is accomplished through serialization/deserialization in files.
 
-    Steps:
-        Copy the models and api folders from the previous project (0x06. Basic authentication).
-        Ensure all mandatory tasks from the previous project are completed.
-        Update @app.before_request in api/v1/app.py to assign the result of auth.current_user(request) to request.current_user.
-        Update the method for the route GET /api/v1/users/<user_id> in api/v1/views/users.py to handle the case where <user_id> is equal to "me" and request.current_user is not None.
+Setup and initiate the server:
 
-Task 1: Empty session
+bash
 
-Objective: Create a class SessionAuth that inherits from Auth. This class will serve as the foundation for implementing session authentication.
+pip3 install -r requirements.txt
+API_HOST=0.0.0.0 API_PORT=5000 python3 -m api.v1.app
 
-    Steps:
-        Define a new class SessionAuth inheriting from Auth.
-        Implement the class without any methods or attributes initially.
 
-Task 2: Create a session
+1. Error handler: Unauthorized (mandatory)
+--------------------------------------------
+What is the HTTP status code for a request unauthorized? 401, of course!
 
-Objective: Implement a method create_session(self, user_id: str = None) -> str in the SessionAuth class to generate a Session ID for a given User ID.
+Edit api/v1/app.py:
 
-    Steps:
-        Add a method create_session to the SessionAuth class.
-        Validate the input user_id parameter.
-        Generate a Session ID using a UUID.
-        Store the Session ID in a dictionary with the corresponding User ID.
-        Return the generated Session ID.
+Add a new error handler for this status code, the response must be a JSON: `{"error": "Unauthorized"}`, status code 401. You must use `jsonify` from Flask.
 
-Task 3: User ID for Session ID
+For testing this new error handler, add a new endpoint in api/v1/views/index.py:
 
-Objective: Add a method user_id_for_session_id(self, session_id: str = None) -> str to the SessionAuth class, which retrieves the User ID associated with a given Session ID.
+Route: GET `/api/v1/unauthorized`
 
-    Steps:
-        Add a method user_id_for_session_id to the SessionAuth class.
-        Validate the input session_id parameter.
-        Retrieve the User ID from the stored dictionary using the Session ID.
-        Return the corresponding User ID.
+This endpoint must raise a 401 error by using `abort - Custom Error Pages`. By calling `abort(401)`, the error handler for 401 will be executed.
 
-Task 4: Session cookie
+2. Error handler: Forbidden (mandatory)
+-----------------------------------------
+What is the HTTP status code for a request where the user is authenticated but not allowed to access to a resource? 403, of course!
 
-Objective: Implement a method session_cookie(self, request=None) in api/v1/auth/auth.py to extract the session cookie value from a request.
+Edit api/v1/app.py:
 
-    Steps:
-        Add a method session_cookie to the Auth class in api/v1/auth/auth.py.
-        Validate the input request parameter.
-        Extract the session cookie value from the request cookies.
-        Return the session cookie value.
+Add a new error handler for this status code, the response must be a JSON: `{"error": "Forbidden"}`, status code 403. You must use `jsonify` from Flask.
 
-Task 5: Before request
+For testing this new error handler, add a new endpoint in api/v1/views/index.py:
 
-Objective: Update the @app.before_request method in api/v1/app.py to handle session authentication, ensuring that unauthorized requests are rejected.
+Route: GET `/api/v1/forbidden`
 
-    Steps:
-        Update the @app.before_request method in api/v1/app.py.
-        Exclude the URL path /api/v1/auth_session/login/ from authentication checks.
-        Check if the request contains both an authorization header and a session cookie.
-        If not, abort the request with status code 401.
+This endpoint must raise a 403 error by using `abort - Custom Error Pages`. By calling `abort(403)`, the error handler for 403 will be executed.
 
-Task 6: Use Session ID for identifying a User
+3. Auth class (mandatory)
+---------------------------
+Now you will create a class to manage the API authentication.
 
-Objective: Implement a method current_user(self, request=None) in the SessionAuth class to retrieve the authenticated User instance based on the session ID.
+Create a folder `api/v1/auth`.
+Create an empty file `api/v1/auth/__init__.py`.
+Create the class `Auth`:
+- in the file `api/v1/auth/auth.py`
+- import `request` from `flask`
+- class name `Auth`
+  - public method `def require_auth(self, path: str, excluded_paths: List[str]) -> bool`: that returns `False` - `path` and `excluded_paths` will be used later, now, you don’t need to take care of them
+  - public method `def authorization_header(self, request=None) -> str`: that returns `None` - `request` will be the Flask request object
+  - public method `def current_user(self, request=None) -> TypeVar('User')`: that returns `None` - `request` will be the Flask request object
+This class is the template for all authentication systems you will implement.
 
-    Steps:
-        Add a method current_user to the SessionAuth class.
-        Retrieve the session ID from the request cookie.
-        Use the session ID to fetch the corresponding User instance.
-        Return the authenticated User instance.
+4. Define which routes don't need authentication (mandatory)
+-------------------------------------------------------------
+Update the method `def require_auth(self, path: str, excluded_paths: List[str]) -> bool` in `Auth` that returns `True` if the path is not in the list of strings `excluded_paths`:
 
-Task 7: New view for Session Authentication
+- Returns `True` if `path` is `None`
+- Returns `True` if `excluded_paths` is `None` or empty
+- Returns `False` if `path` is in `excluded_paths`
+You can assume `excluded_paths` contains string paths always ending by a `/`.
+This method must be slash tolerant: `path=/api/v1/status` and `path=/api/v1/status/` must return `False` if `excluded_paths` contains `/api/v1/status/`.
 
-Objective: Create a new Flask view to handle session authentication routes, including user login and session creation.
+5. Request validation! (mandatory)
+------------------------------------
+Now, you will validate all requests to secure the API.
 
-    Steps:
-        Create a new Flask view for session authentication routes.
-        Define a route POST /auth_session/login to handle user login.
-        Retrieve email and password parameters from the request form.
-        Validate the email and password.
-        Create a session for the authenticated user and set the session cookie.
-        Return the authenticated User instance in JSON format.
+Update the method `def authorization_header(self, request=None) -> str` in `api/v1/auth/auth.py`:
 
-Task 8: Logout
+- If `request` is `None`, returns `None`
+- If `request` doesn’t contain the header key `Authorization`, returns `None`
+- Otherwise, return the value of the header request `Authorization`
+Update the file `api/v1/app.py`:
 
-Objective: Implement a method destroy_session(self, request=None) in the SessionAuth class to handle user logout by destroying the session.
+- Create a variable `auth` initialized to `None` after the CORS definition
+- Based on the environment variable `AUTH_TYPE`, load and assign the right instance of authentication to `auth`
+- if `auth`:
+  - import `Auth` from `api/v1/auth.auth`
+  - create an instance of `Auth` and assign it to the variable `auth`
+Now the biggest piece is the filtering of each request. For that, you will use the Flask method `before_request`.
 
-    Steps:
-        Add a method destroy_session to the SessionAuth class.
-        Retrieve the session ID from the request cookie.
-        Delete the session ID entry from the stored dictionary.
-        Return True if the session was successfully destroyed, False otherwise.
+Add a method in `api/v1/app.py` to handle `before_request`:
+- if `auth` is `None`, do nothing
+- if `request.path` is not part of this list `['/api/v1/status/', '/api/v1/unauthorized/', '/api/v1/forbidden/']`, do nothing - you must use the method `require_auth` from the `auth` instance
+- if `auth.authorization_header(request)` returns `None`, raise the error 401 - you must use `abort`
+- if `auth.current_user(request)` returns `None`, raise the error 403 - you must use `abort`
 
-Task 9: Expiration?
+6. Basic auth (mandatory)
+---------------------------
+Create a class `BasicAuth` that inherits from `Auth`. For the moment, this class will be empty.
 
-Objective: Add an expiration mechanism to session IDs to enhance security and prevent session hijacking.
+Update `api/v1/app.py` for using `BasicAuth` class instead of `Auth` depending on the value of the environment variable `AUTH_TYPE`. If `AUTH_TYPE` is equal to `basic_auth`:
 
-    Steps:
-        Modify the SessionAuth class to include an expiration duration for session IDs.
-        Implement logic to check the expiration of session IDs.
-        Expire session IDs if they exceed the specified duration.
+- import `BasicAuth` from `api/v1/auth.basic_auth`
+- create an instance of `BasicAuth` and assign it to the variable `auth`
+Otherwise, keep the previous mechanism with `auth` an instance of `Auth`.
 
-Task 10: Sessions in database
+7. Basic - Base64 part (mandatory)
+------------------------------------
+Add the method `def extract_base64_authorization_header(self, authorization_header: str) -> str` in the class `BasicAuth` that returns the Base64 part of the Authorization header for a Basic Authentication:
 
-Objective: Implement a database-backed session authentication system using a new model UserSession and an authentication class SessionDBAuth.
+- Return `None` if `authorization_header` is `None`
+- Return `None` if `authorization_header` is not a string
+- Return `None` if `authorization_header` doesn’t start by `Basic` (with a space at the end)
+- Otherwise, return the value after `Basic` (after the space)
+You can assume `authorization_header` contains only one `Basic`.
 
-    Steps:
-        Create a new model UserSession to represent session data in the database.
-        Implement methods in SessionDBAuth to interact with the database for session management.
-        Update api/v1/app.py to use SessionDBAuth for authentication if specified in the environment variable AUTH_TYPE.
+8. Basic - Base64 decode (mandatory)
+--------------------------------------
+Add the method `def decode_base64_authorization_header(self, base64_authorization_header: str) -> str` in the class `BasicAuth` that returns the decoded value of a Base64 string `base64_authorization_header`:
+
+- Return `None` if `base64_authorization_header` is `None`
+- Return `None` if `base64_authorization_header` is not a string
+- Return `None` if `base64_authorization_header` is not a valid Base64 - you can use `try/except`
+- Otherwise, return the decoded value as UTF8 string - you can use `decode('utf-8')`
+
+9. Basic - User credentials (mandatory)
+------------------------------------------
+Add the method `def extract_user_credentials(self, decoded_base64_authorization_header: str) -> (str, str)` in the class `BasicAuth` that returns the user email and password from the Base64 decoded value.
+
+- This method must return 2 values
+- Return `None, None` if `decoded_base64_authorization_header` is `None`
+- Return `None, None` if `decoded_base64_authorization_header` is not a string
+- Return `None, None` if `decoded_base64_authorization_header` doesn’t contain `:`
+- Otherwise, return the user email and the user password - these 2 values must be separated by a `:`
+You can assume `decoded_base64_authorization_header` will contain only one `:`.
+
+10. Basic - User object (mandatory)
+------------------------------------
+Add the method `def user_object_from_credentials(self, user_email: str, user_pwd: str) -> TypeVar('User')` in the class `BasicAuth` that returns the `User` instance based on his email and password.
+
+- Return `None` if `user_email` is `None` or not a string
+- Return `None` if `user_pwd` is `None` or not a string
+- Return `None` if your database (file) doesn’t contain any `User` instance with email equal to `user_email` - you should use the class method `search` of the `User` to lookup the list of users based on their email. Don’t forget to test all cases: “what if there is no user in DB?”, etc.
+- Return `None` if `user_pwd` is not the password of the `User` instance found - you must use the method `is_valid_password` of `User`
+- Otherwise, return the `User` instance
+
+11. Basic - Overload current_user - and BOOM! (mandatory)
+----------------------------------------------------------
+Now, you have all pieces for having a complete Basic authentication.
+
+Add the method `def current_user(self, request=None) -> TypeVar('User')` in the class `BasicAuth` that overloads `Auth` and retrieves the `User` instance for a request:
+
+- You must use `authorization_header`
+- You must use `extract_base64_authorization_header`
+- You must use `decode_base64_authorization_header`
+- You must use `extract_user_credentials`
+- You must use `user_object_from_credentials`
+With this update, now your API is fully protected by a Basic Authentication. Enjoy!
+
+12. Basic - Allow password with ":" (advanced)
+-----------------------------------------------
+Improve the method `def extract_user_credentials(self, decoded_base64_authorization_header)` to allow passwords with `:`.
+
+In the first terminal:
+
+13. Require auth with stars (advanced)
+----------------------------------------
+Improve `def require_auth(self, path, excluded_paths)` by allowing `*` at the end of excluded paths.
+
+Example for `excluded_paths = ["/api/v1/stat*"]`:
+
+- `/api/v1/users` will return `True`
+- `/api/v1/status` will return `False`
+- `/api/v1/stats` will return `False`
+

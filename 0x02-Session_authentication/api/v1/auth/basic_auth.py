@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-""" Module handling Basic Authentication
-"""
+'''Module handling Basic Authentication'''
 from api.v1.auth.auth import Auth
 from base64 import b64decode
 from models.user import User
@@ -114,4 +113,3 @@ class BasicAuth(Auth):
         user = self.user_object_from_credentials(email, pwd)
 
         return user
-
