@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """A Flask app for user authentication.
 """
+
 import logging
+
 from flask import Flask, abort, jsonify, redirect, request
+
 from auth import Auth
 
 logging.disable(logging.WARNING)
@@ -109,4 +112,3 @@ def update_password() -> str:
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port="5000")
-
